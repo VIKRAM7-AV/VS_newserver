@@ -122,7 +122,7 @@ export const updateProduct = async (req, res) => {
       return res.status(400).json({ message: "Product already exists" });
     }
 
-    const categoryname = await Category.findOne({ categoryName: category });
+    const categoryname = await Category.findOne({ _id: category });
     if (!categoryname) {
       return res.status(400).json({ message: "Category does not exist" });
     }
