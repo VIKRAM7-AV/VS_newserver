@@ -12,6 +12,14 @@ import staffRoute from "./routes/staffRoute.js"
 import cors from "cors"
 import EquipementsRoute from "./routes/EquipementsRoute.js"
 import cloudinary from "cloudinary"
+
+import dashboard from "./backend/routes/dashboard.js"
+import customers from "./backend/routes/customers.js"
+import equipment from "./backend/routes/equipment.js"
+import bookings from "./backend/routes/bookings.js"
+import repairs from "./backend/routes/repairs.js"
+import equipmentLost from "./backend/routes/equipmentLost.js"
+
 const app =express();
 
 app.use(cors({
@@ -40,6 +48,16 @@ app.use("/api/v2/stock",stockRoute);
 app.use('/api/v2/newstock',newStockRoute);
 app.use('/api/v2/staff',staffRoute);
 app.use('/api/v2/equipements',EquipementsRoute);
+
+//equipments Rental
+
+
+app.use("/api/rent/dashboard",dashboard)
+app.use("/api/rent/customers",customers)
+app.use("/api/rent/equipment",equipment)
+app.use("/api/rent/bookings",bookings)
+app.use("/api/rent/repairs", repairs)
+app.use("/api/rent/equipment-lost",equipmentLost)
 
 app.listen(process.env.PORT,()=>{
     console.log("Server is Running....");
