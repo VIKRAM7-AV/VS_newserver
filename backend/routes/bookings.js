@@ -1,6 +1,7 @@
 import express from "express"
-import {Booking} from "../models/Booking.js"
-import {Equipment} from "../models/Equipment.js"
+import { Booking } from "../models/Booking.js"
+import { Equipment } from "../models/Equipment.js"
+import mongoose from "mongoose"
 const router = express.Router()
 
 // Get all bookings
@@ -19,46 +20,68 @@ router.get("/", async (req, res) => {
 // Create booking
 router.post("/", async (req, res) => {
   try {
-    const { equipment: equipmentId, quantity } = req.body
+    console.log("Creating booking with data:", req.body);
+    const { customer, deliveryDate, returnDate, duration } = req.body;
+    if (!customer || !deliveryDate || !returnDate || !duration) {
+      return res.status(400).json({ message: "Customer, delivery date, return date, and duration are required" });
+    }
+    const { equipment: equipmentId, quantity } = req.body;
 
-    // Check equipment availability
-    const equipment = await Equipment.findById(equipmentId)
-    if (!equipment) {
-      return res.status(404).json({ message: "Equipment not found" })
+    // Validate ObjectIds
+    if (!mongoose.Types.ObjectId.isValid(customer)) {
+      return res.status(400).json({ message: "Invalid customer ID" });
+    }
+    if (!mongoose.Types.ObjectId.isValid(equipmentId)) {
+      return res.status(400).json({ message: "Invalid equipment ID" });
     }
 
+    // Check equipment availability
+    const equipment = await Equipment.findById(equipmentId);
+    if (!equipment) {
+      return res.status(404).json({ message: "Equipment not found" });
+    }
+    console.log("Equipment details:", {
+      id: equipment._id,
+      availableQuantity: equipment.availableQuantity,
+      requestedQuantity: quantity,
+    });
+
     if (equipment.availableQuantity < quantity) {
-      return res.status(400).json({ message: "Insufficient equipment quantity available" })
+      return res.status(400).json({
+        message: `Insufficient equipment quantity available. Requested: ${quantity}, Available: ${equipment.availableQuantity}`,
+      });
     }
 
     // Calculate totals
-    const price = equipment.rentalAmount * req.body.duration * quantity
-    const gstAmount = (price * (req.body.gst || 0)) / 100
-    const subtotal = price
-    const grandTotal = subtotal + gstAmount
+    const price = equipment.rentalAmount * req.body.duration * quantity;
+    const gstAmount = (price * (req.body.gst || 0)) / 100;
+    const subtotal = price;
+    const grandTotal = subtotal + gstAmount;
 
     const booking = new Booking({
       ...req.body,
       price,
       subtotal,
       grandTotal,
-    })
+    });
 
-    const savedBooking = await booking.save()
+    const savedBooking = await booking.save();
+    console.log("Saved booking:", savedBooking);
 
     // Update equipment availability
-    equipment.availableQuantity -= quantity
-    await equipment.save()
+    equipment.availableQuantity -= quantity;
+    await equipment.save();
 
     const populatedBooking = await Booking.findById(savedBooking._id)
       .populate("customer", "name email phone")
-      .populate("equipment", "name")
+      .populate("equipment", "name");
 
-    res.status(201).json(populatedBooking)
+    res.status(201).json(populatedBooking);
   } catch (error) {
-    res.status(400).json({ message: error.message })
+    console.error("Booking creation error:", error); // Detailed logging
+    res.status(400).json({ message: error.message || "Failed to create booking" });
   }
-})
+});
 
 // Update booking
 router.put("/:id", async (req, res) => {

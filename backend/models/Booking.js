@@ -1,5 +1,10 @@
 import mongoose from "mongoose"
 
+const counterSchema = new mongoose.Schema({
+  _id: String,
+  seq: Number,
+});
+
 const bookingSchema = new mongoose.Schema(
   {
     bookingId: {
@@ -60,13 +65,22 @@ const bookingSchema = new mongoose.Schema(
   },
 )
 
-// Generate booking ID before saving
+const Counter = mongoose.model("Counter", counterSchema);
+
 bookingSchema.pre("save", async function (next) {
   if (!this.bookingId) {
-    const count = await mongoose.model("Booking").countDocuments()
-    this.bookingId = `#BOOK-${String(count + 1).padStart(5, "0")}`
+    try {
+      const counter = await Counter.findOneAndUpdate(
+        { _id: "bookingId" },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+      );
+      this.bookingId = `#BOOK-${String(counter.seq).padStart(3, "0")}`;
+    } catch (error) {
+      return next(error);
+    }
   }
-  next()
-})
+  next();
+});
 
 export const Booking = mongoose.model("Booking", bookingSchema);

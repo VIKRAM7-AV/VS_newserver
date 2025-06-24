@@ -3,7 +3,8 @@ import mongoose from "mongoose";
 const repairSchema = new mongoose.Schema(
   {
     equipmentName: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Equipment",
       required: true,
     },
     date: {

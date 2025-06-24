@@ -5,7 +5,7 @@ const router = express.Router()
 // Get all lost equipment reports
 router.get("/", async (req, res) => {
   try {
-    const lostEquipment = await EquipmentLost.find().sort({ createdAt: -1 })
+    const lostEquipment = await EquipmentLost.find().populate("equipment", "name").sort({ createdAt: -1 })
     res.json(lostEquipment)
   } catch (error) {
     res.status(500).json({ message: error.message })

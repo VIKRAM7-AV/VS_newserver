@@ -1,11 +1,12 @@
 import express from "express"
 import {Repair} from "../models/Repair.js"
+import { Equipment } from "../models/Equipment.js"
 const router = express.Router()
 
 // Get all repairs
 router.get("/", async (req, res) => {
   try {
-    const repairs = await Repair.find().sort({ createdAt: -1 })
+    const repairs = await Repair.find().populate("equipmentName", "name").sort({ createdAt: -1 })
     res.json(repairs)
   } catch (error) {
     res.status(500).json({ message: error.message })
