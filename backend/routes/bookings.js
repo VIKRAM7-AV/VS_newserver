@@ -9,7 +9,7 @@ router.get("/", async (req, res) => {
   try {
     const bookings = await Booking.find()
       .populate("customer", "name email phone")
-      .populate("equipment", "name")
+      .populate("equipment", "name rentalAmount availableQuantity")
       .sort({ createdAt: -1 })
     res.json(bookings)
   } catch (error) {
@@ -21,11 +21,12 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     console.log("Creating booking with data:", req.body);
-    const { customer, deliveryDate, returnDate, duration } = req.body;
-    if (!customer || !deliveryDate || !returnDate || !duration) {
-      return res.status(400).json({ message: "Customer, delivery date, return date, and duration are required" });
+    const { customer, deliveryDate, returnDate, duration, quantity, advanceAmount } = req.body;
+    
+    if (!customer || !deliveryDate || !returnDate || !duration || !quantity) {
+      return res.status(400).json({ message: "Customer, delivery date, return date, duration, and quantity are required" });
     }
-    const { equipment: equipmentId, quantity } = req.body;
+    const { equipment: equipmentId } = req.body;
 
     // Validate ObjectIds
     if (!mongoose.Types.ObjectId.isValid(customer)) {
@@ -40,11 +41,6 @@ router.post("/", async (req, res) => {
     if (!equipment) {
       return res.status(404).json({ message: "Equipment not found" });
     }
-    console.log("Equipment details:", {
-      id: equipment._id,
-      availableQuantity: equipment.availableQuantity,
-      requestedQuantity: quantity,
-    });
 
     if (equipment.availableQuantity < quantity) {
       return res.status(400).json({
@@ -53,20 +49,22 @@ router.post("/", async (req, res) => {
     }
 
     // Calculate totals
-    const price = equipment.rentalAmount * req.body.duration * quantity;
+    const price = equipment.rentalAmount * duration * quantity;
     const gstAmount = (price * (req.body.gst || 0)) / 100;
     const subtotal = price;
     const grandTotal = subtotal + gstAmount;
+    const remainingAmount = grandTotal - (advanceAmount || 0);
 
     const booking = new Booking({
       ...req.body,
       price,
       subtotal,
       grandTotal,
+      advanceAmount: advanceAmount || 0,
+      remainingAmount,
     });
 
     const savedBooking = await booking.save();
-    console.log("Saved booking:", savedBooking);
 
     // Update equipment availability
     equipment.availableQuantity -= quantity;
@@ -74,11 +72,11 @@ router.post("/", async (req, res) => {
 
     const populatedBooking = await Booking.findById(savedBooking._id)
       .populate("customer", "name email phone")
-      .populate("equipment", "name");
+      .populate("equipment", "name rentalAmount availableQuantity");
 
     res.status(201).json(populatedBooking);
   } catch (error) {
-    console.error("Booking creation error:", error); // Detailed logging
+    console.error("Booking creation error:", error);
     res.status(400).json({ message: error.message || "Failed to create booking" });
   }
 });
@@ -86,39 +84,67 @@ router.post("/", async (req, res) => {
 // Update booking
 router.put("/:id", async (req, res) => {
   try {
+    const prevBooking = await Booking.findById(req.params.id);
+    if (!prevBooking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    // Restore previous quantity to equipment
+    const prevEquipment = await Equipment.findById(prevBooking.equipment);
+    if (prevEquipment) {
+      prevEquipment.availableQuantity += prevBooking.quantity;
+      await prevEquipment.save();
+    }
+
+    // Validate new equipment quantity
+    const { equipment: equipmentId, quantity } = req.body;
+    if (equipmentId && quantity) {
+      const newEquipment = await Equipment.findById(equipmentId);
+      if (!newEquipment) {
+        return res.status(404).json({ message: "Equipment not found" });
+      }
+      if (newEquipment.availableQuantity < quantity) {
+        return res.status(400).json({
+          message: `Insufficient equipment quantity available. Requested: ${quantity}, Available: ${newEquipment.availableQuantity}`,
+        });
+      }
+      newEquipment.availableQuantity -= quantity;
+      await newEquipment.save();
+    }
+
     const booking = await Booking.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
       .populate("customer", "name email phone")
-      .populate("equipment", "name")
+      .populate("equipment", "name rentalAmount availableQuantity");
 
     if (!booking) {
-      return res.status(404).json({ message: "Booking not found" })
+      return res.status(404).json({ message: "Booking not found" });
     }
-    res.json(booking)
+    res.json(booking);
   } catch (error) {
-    res.status(400).json({ message: error.message })
+    res.status(400).json({ message: error.message });
   }
-})
+});
 
 // Delete booking
 router.delete("/:id", async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.id)
+    const booking = await Booking.findById(req.params.id);
     if (!booking) {
-      return res.status(404).json({ message: "Booking not found" })
+      return res.status(404).json({ message: "Booking not found" });
     }
 
     // Restore equipment availability
-    const equipment = await Equipment.findById(booking.equipment)
+    const equipment = await Equipment.findById(booking.equipment);
     if (equipment) {
-      equipment.availableQuantity += booking.quantity
-      await equipment.save()
+      equipment.availableQuantity += booking.quantity;
+      await equipment.save();
     }
 
-    await Booking.findByIdAndDelete(req.params.id)
-    res.json({ message: "Booking deleted successfully" })
+    await Booking.findByIdAndDelete(req.params.id);
+    res.json({ message: "Booking deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ message: error.message });
   }
-})
+});
 
 export default router;

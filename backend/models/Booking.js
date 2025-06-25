@@ -49,7 +49,7 @@ const bookingSchema = new mongoose.Schema(
     },
     gst: {
       type: Number,
-      default:0,
+      default: 0,
     },
     subtotal: {
       type: Number,
@@ -58,6 +58,14 @@ const bookingSchema = new mongoose.Schema(
     grandTotal: {
       type: Number,
       required: true,
+    },
+    advanceAmount: {
+      type: Number,
+      default: 0,
+    },
+    remainingAmount: {
+      type: Number,
+      default: 0,
     },
   },
   {
