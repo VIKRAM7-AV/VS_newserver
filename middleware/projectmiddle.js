@@ -15,7 +15,7 @@ const projectMiddle=async(req, res, next) => {
         if (!project) {
             return res.status(401).json({ message: "Unauthorized Project" });
         }
-        req.project = project;
+        req.project = project._id;
         next()
         
     } catch (error) {

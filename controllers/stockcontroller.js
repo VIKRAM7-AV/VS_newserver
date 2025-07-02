@@ -4,7 +4,7 @@ import StackData from "../Models/stockModel.js";
 
 export const inboundEntry = async (req, res) => {
   try {
-    const { id } = req.params; // Material ID
+    const { id } = req.params;
     const { inbound, description } = req.body;
 
     if (typeof inbound !== "number" || !description) {
@@ -14,9 +14,9 @@ export const inboundEntry = async (req, res) => {
     const product = await Product.findById(id);
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
-    }
+    }                                          
 
-    const projectId = req.project;
+    const projectId = req.project._id;
     const project = await Project.findById(projectId);
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
@@ -121,7 +121,6 @@ export const outboundEntry = async (req, res) => {
       return res.status(400).json({ message: "Material does not exist in stock for this site." });
     }
 
-    // ✅ Outbound calculation
     const lastStock = existingEntry.Stock.at(-1) ?? 0;
 
     if (outbound > lastStock) {
@@ -132,8 +131,8 @@ export const outboundEntry = async (req, res) => {
 
     // 🔁 Push updated values
     existingEntry.Stock.push(newStock);
-    existingEntry.inbound.push(0); // No inbound in outbound entry
-    existingEntry.values.push(0); // Assuming values are not used in outbound
+    existingEntry.inbound.push(0);
+    existingEntry.values.push(0); 
     existingEntry.outbound.push(outbound);
     existingEntry.description.push(description);
     existingEntry.date.push(new Date());
@@ -212,18 +211,20 @@ export const stockEntry = async (req, res) => {
 export const getProductStack = async (req, res, next) => {
   try {
     const projectId = req.project;
-    const stackData = await StackData.findOne({ siteId: projectId._id }).populate();
+    const stackData = await StackData.findOne({ siteId: projectId._id }).populate({
+      path: "type.materialId",
+      select: "productName productImg UnitofMeasurement category", // Add category
+    });
 
     if (!stackData) {
       return res.status(404).json({ message: "No stock data found for this project" });
     }
     res.status(200).json({ message: "Stock data retrieved successfully", stackData });
-
   } catch (error) {
     console.log("Error in getProductStack controller", error);
     res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
 export const getProductSite = async (req, res) => {
   try {

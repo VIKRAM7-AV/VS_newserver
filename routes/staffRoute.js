@@ -9,7 +9,7 @@ const router = express.Router();
 router.post('/newstaff',projectmiddle,addStaff);
 router.get('/getallstaff',adminRoute,getAllStaff);
 router.get('/getstaff/:id',protectRoute,getAllIdStaff);
-router.get('/staffs/:id',projectmiddle,getIdStaff);
+router.get('/staffs',projectmiddle,getIdStaff);
 router.post('/attendance/:id',projectmiddle,Attenance);
 router.get('/staffname/:Name',projectmiddle,getstaffName);
 
