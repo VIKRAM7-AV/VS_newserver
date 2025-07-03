@@ -36,7 +36,7 @@ const materialEntrySchema = new mongoose.Schema({
 const stackDataSchema = new mongoose.Schema({
   siteId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Site',
+    ref: 'Project',
     required: true,
   },
   type: {

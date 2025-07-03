@@ -245,19 +245,31 @@ export const getProductSite = async (req, res) => {
 }
 export const AllProduct = async (req, res) => {
   try {
-    const allStock = await StackData.find({}).populate({
-      path: 'type.materialId',
-      populate: { path: 'category' }
-    });
+    const allStock = await StackData.find({})
+      .populate({
+        path: "siteId", // Populate site details
+      })
+      .populate({
+        path: "type.materialId", // Populate materialId
+        populate: {
+          path: "category", // Populate category inside material
+        },
+      });
+
     if (!allStock || allStock.length === 0) {
       return res.status(404).json({ message: "No stock data found" });
     }
-    res.status(200).json({ message: "Stock data retrieved successfully", allStock });
+
+    res.status(200).json({
+      message: "Stock data retrieved successfully",
+      allStock,
+    });
   } catch (error) {
-    console.log("Error in getProductStack controller", error);
+    console.error("Error in AllProduct controller", error);
     res.status(500).json({ message: "Internal server error" });
   }
-}
+};
+
 
 export const lastentry = async (req, res) => {
   try {
