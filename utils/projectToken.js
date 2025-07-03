@@ -6,9 +6,8 @@ const projectToken = (projectId,res) => {
     res.cookie("project", Project, {
         maxAge: 7 * 24 * 60 * 60 * 1000,
         httpOnly: true,
-        // secure: process.env.NODE_ENV !== "development",
-        secure: false,
-        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none",
     });
 }
 
