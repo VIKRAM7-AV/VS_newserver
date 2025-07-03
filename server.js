@@ -23,7 +23,7 @@ import equipmentLost from "./backend/routes/equipmentLost.js"
 const app =express();
 
 app.use(cors({
-    origin:"http://localhost:3000",
+    origin:"https://vs-new.vercel.app",
     credentials:true
 })) 
 
