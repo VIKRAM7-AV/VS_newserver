@@ -30,10 +30,8 @@ app.use(cors({
         // Allowed origins list - production + local dev ku
         const allowedOrigins = [
             "https://vs-new.vercel.app",
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "http://192.168.0.11:3001"
-            "http://192.168.0.11:3000"
+            "https://scaffolding.seetharamengineering.in",
+            "http://scaffolding.seetharamengineering.in"
         ];
         
         // Origin allowed ah check pannum
