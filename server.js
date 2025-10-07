@@ -20,14 +20,31 @@ import bookings from "./backend/routes/bookings.js"
 import repairs from "./backend/routes/repairs.js"
 import equipmentLost from "./backend/routes/equipmentLost.js"
 
-const app =express();
+const app = express();
 
 app.use(cors({
-    origin:"https://vs-new.vercel.app",
-    credentials:true
+    origin: function (origin, callback) {
+        // No origin (like mobile apps or curl) allow cheyyum
+        if (!origin) return callback(null, true);
+        
+        // Allowed origins list - production + local dev ku
+        const allowedOrigins = [
+            "https://vs-new.vercel.app",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://192.168.0.11:3001"
+        ];
+        
+        // Origin allowed ah check pannum
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        } else {
+            const msg = "CORS policy ithu origin allow pannala.";
+            return callback(new Error(msg), false);
+        }
+    },
+    credentials: true
 })) 
-
-//
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -50,8 +67,6 @@ app.use('/api/v2/staff',staffRoute);
 app.use('/api/v2/equipements',EquipementsRoute);
 
 //equipments Rental
-
-
 app.use("/api/rent/dashboard",dashboard)
 app.use("/api/rent/customers",customers)
 app.use("/api/rent/equipment",equipment)
