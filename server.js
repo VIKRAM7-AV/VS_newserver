@@ -31,6 +31,7 @@ app.use(cors({
         const allowedOrigins = [
             "https://vs-new.vercel.app",
             "https://scaffolding.seetharamengineering.in",
+            "https://scaffolding.sesacommunications.in",
             "http://scaffolding.seetharamengineering.in"
         ];
         
