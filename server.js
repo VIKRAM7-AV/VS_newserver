@@ -32,7 +32,8 @@ app.use(cors({
             "https://vs-new.vercel.app",
             "https://scaffolding.seetharamengineering.in",
             "https://scaffolding.sesacommunications.in",
-            "http://scaffolding.seetharamengineering.in"
+            "http://scaffolding.seetharamengineering.in",
+            "http://scaffolding.sesacommunications.in"
         ];
         
         // Origin allowed ah check pannum
